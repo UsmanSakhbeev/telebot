@@ -2,18 +2,32 @@ version: "3.8"
 
 services:
   bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     command: "python bot.py"
-    volumes:
-      - .:/app
-    env_file:
-      - .env
+    volumes: [ .:/app ]
+    env_file: [ .env ]
     restart: unless-stopped
-    networks:
-      - evetradeanalyzer_default
+    depends_on: [ db ]
 
-networks:
-  evetradeanalyzer_default:
-    external: true
+  db:
+    image: postgres:15
+    restart: unless-stopped
+
+    # ↓ меняем серверные параметры прямо в командной строке
+    command: ["postgres", "-c", "shared_buffers=64MB"]
+
+    environment:
+      POSTGRES_USER: ${DB_USER:-bot_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-bot_pass}
+      POSTGRES_DB: ${DB_NAME:-farmbot}
+      TZ: Europe/Moscow
+
+    ports:   # если БД нужна только бот-контейнеру, эту строчку можно убрать
+      - "55432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+
+volumes:
+  postgres_data:
