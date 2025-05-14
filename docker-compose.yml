@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: "python bot.py"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - evetradeanalyzer_default
+
+networks:
+  evetradeanalyzer_default:
+    external: true
