@@ -37,12 +37,6 @@ async def main():
 if __name__ == "__main__":
     import asyncio
 
-    import nest_asyncio
-
-    # Применяем patch для повторного использования event loop
-    nest_asyncio.apply()
-
-    # Получаем текущий event loop и запускаем в нём main()
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    # asyncio.run создаёт петлю, выполняет main() и корректно закрывает её
+    asyncio.run(main())
 
