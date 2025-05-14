@@ -7,13 +7,17 @@ services:
     volumes: [ .:/app ]
     env_file: [ .env ]
     restart: unless-stopped
-    depends_on: [ db ]
+
+    # ⬇ ждём, пока db пройдёт healthcheck
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15
     restart: unless-stopped
 
-    # ↓ меняем серверные параметры прямо в командной строке
+    # shared_buffers = 64 MB  ➜ легко изменить: «128MB» и `docker compose up -d --build db`
     command: ["postgres", "-c", "shared_buffers=64MB"]
 
     environment:
@@ -22,12 +26,16 @@ services:
       POSTGRES_DB: ${DB_NAME:-farmbot}
       TZ: Europe/Moscow
 
-    ports:   # если БД нужна только бот-контейнеру, эту строчку можно убрать
-      - "55432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+
+    # ⬇ простейший healthcheck на pg_isready
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-bot_user}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres_data:
