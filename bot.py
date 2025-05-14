@@ -31,7 +31,12 @@ async def main():
     )
     scheduler.start()
 
-    await app.run_polling()
+    # ─── корректный «ручной» запуск в уже работающем event-loop-е ───
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    # ждём, пока не прилетит сигнал остановки (Ctrl-C / SIGTERM)
+    await app.updater.idle()
 
 
 if __name__ == "__main__":
